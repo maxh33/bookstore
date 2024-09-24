@@ -17,7 +17,7 @@ class TestProductViewSet(APITestCase):
 
         self.product = ProductFactory(
             title='rtx gpu 1',
-            price='1000',
+            price=1000,
         )
 
     def test_get_all_product(self):

@@ -2,6 +2,7 @@ import json
 
 from django.urls import reverse
 from rest_framework import status
+from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase, APIClient
 
 from order.factories import OrderFactory, UserFactory
@@ -19,8 +20,12 @@ class TestOrderViewSet(APITestCase):
             title="mouse", price=100, category=[self.category]
         )
         self.order = OrderFactory(product=[self.product])
+        token = Token.objects.create(user=self.order.user)
+        token.save()
 
     def test_order(self):
+        token = Token.objects.get(user__username=self.order.user.username)
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
         response = self.client.get(
             reverse("order-list", kwargs={"version": "v1"}))
 
@@ -44,6 +49,8 @@ class TestOrderViewSet(APITestCase):
         )
 
     def test_create_order(self):
+        token = Token.objects.get(user__username=self.order.user.username)
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
         user = UserFactory()
         product = ProductFactory()
         data = json.dumps({"product_id": [product.id], "user": user.id})

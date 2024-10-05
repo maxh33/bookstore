@@ -133,10 +133,6 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Debug toolbar settings
-INTERNAL_IPS = [
-    "127.0.0.1",
-]
 
 # REST Framework settings
 REST_FRAMEWORK = {
@@ -149,6 +145,7 @@ REST_FRAMEWORK = {
 ],
 }
 
+# Debug toolbar settings
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
@@ -159,4 +156,4 @@ DEBUG = int(os.environ.get("DEBUG", default=0))
 
 # 'DJANGO_ALLOWED_HOSTS' should be a single string of hosts with a space between each host
 # Example: 'DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]'
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(" ")
+ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(" ")

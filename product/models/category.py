@@ -6,6 +6,5 @@ class Category(models.Model):
     description = models.TextField(blank=True, null=True)
     active = models.BooleanField(default=True)
 
-
     def __str__(self):
         return self.title

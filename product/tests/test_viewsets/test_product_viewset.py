@@ -25,9 +25,10 @@ class TestProductViewSet(APITestCase):
     def test_get_all_product(self):
         token = Token.objects.get(user__username=self.user.username)
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
-        response = self.client.get(
-            reverse('product-list', kwargs={'version': 'v1'})
-        )
+        
+        # Use the full URL pattern including the 'bookstore/' prefix
+        url = f"/bookstore/v1/product/"
+        response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         product_data = json.loads(response.content)
@@ -46,8 +47,10 @@ class TestProductViewSet(APITestCase):
             'category_id': [category.id]
         })
 
+        # Use the full URL pattern including the 'bookstore/' prefix
+        url = f"/bookstore/v1/product/"
         response = self.client.post(
-            reverse('product-list', kwargs={'version': 'v1'}),
+            url,
             data=data,
             content_type='application/json'
         )

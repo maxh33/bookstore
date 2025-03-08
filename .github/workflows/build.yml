@@ -30,11 +30,8 @@ jobs:
         SECRET_KEY: ${{ secrets.SECRET_KEY }}
         DEBUG: 1
         DJANGO_ALLOWED_HOSTS: localhost 127.0.0.1 [::1]
-        SQL_ENGINE: django.db.backends.postgresql
-        SQL_DATABASE: bookstore_dev_db
-        SQL_USER: bookstore_dev
-        SQL_PASSWORD: ${{ secrets.SQL_PASSWORD }}
-        SQL_HOST: db
-        SQL_PORT: 5432
+        # Use SQLite for CI testing
+        SQL_ENGINE: django.db.backends.sqlite3
+        SQL_DATABASE: ":memory:"
       run: |
         python manage.py test

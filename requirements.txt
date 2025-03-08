@@ -169,6 +169,7 @@ whitenoise==6.9.0 \
 # setuptools
 
 setuptools==75.8.2 \
+    --hash=sha256:558e47c15f1811c1fa7adbd0096669bf76c1d3f433f58324df69f3f5ecac4e8f \
     --hash=sha256:0c23094b5964a0ed96cebf1b96468f9bcdd00e30ffbb0cd05e4c8c5c227436d6 \
     --hash=sha256:be5c1ea510b25cd3ef8f5dc0af9a700d09e32cfb4d8efb3d74acbc39006b2042
     # via -r requirements.in

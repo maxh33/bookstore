@@ -10,4 +10,5 @@ htmlcov/
 prompts/
 .idea/
 docker-compose.yml
-requirements.in 
+requirements.in
+requirements-ci.txt 

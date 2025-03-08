@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'main'
+      - 'staging'
 
 jobs:
   heroku-deploy:
@@ -11,21 +12,11 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
-      - name: Deploy to Heroku
-        uses: akhileshns/heroku-deploy@v3.12.12
-        with:
-          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-          heroku_app_name: ${{ secrets.HEROKU_APP_NAME }}
-          heroku_email: ${{ secrets.HEROKU_EMAIL }}
-
-  custom-deploy:
-    needs: heroku-deploy
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      - name: Set up Heroku CLI
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh
       - name: Heroku login credentials
         run: |
           cat > ~/.netrc <<EOF
@@ -43,5 +34,17 @@ jobs:
         run: heroku git:remote --app $HEROKU_APP_NAME
         env:
           HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
+      - name: Configure Heroku environment variables
+        run: |
+          heroku config:set SECRET_KEY="${{ secrets.SECRET_KEY }}" --app $HEROKU_APP_NAME
+          heroku config:set DEBUG=0 --app $HEROKU_APP_NAME
+          heroku config:set ALLOWED_HOSTS="${{ secrets.HEROKU_APP_NAME }}.herokuapp.com" --app $HEROKU_APP_NAME
+          heroku config:set DISABLE_COLLECTSTATIC=0 --app $HEROKU_APP_NAME
+        env:
+          HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
       - name: Push to Heroku
-        run: git push heroku main:main
+        run: git push heroku HEAD:refs/heads/main
+      - name: Run database migrations
+        run: heroku run python manage.py migrate --app $HEROKU_APP_NAME
+        env:
+          HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}

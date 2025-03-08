@@ -63,10 +63,13 @@ WORKDIR /app
 # Copy application code
 COPY . /app/
 
+# Run collectstatic for Django
+RUN python manage.py collectstatic --noinput
+
 # Expose port
 EXPOSE 8000
 
-# Run the application
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Run the application with gunicorn for production
+CMD gunicorn bookstore.wsgi:application --bind 0.0.0.0:$PORT
 
 

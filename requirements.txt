@@ -110,3 +110,12 @@ dj-database-url==2.1.0 ; python_version >= "3.12" and python_version < "4.0" \
 factory-boy==3.3.0 ; python_version >= "3.12" and python_version < "4.0" \
     --hash=sha256:a2cdbdb63228177aa4f1c52f4b6d83fab2b8623bf602c7dedd7eb83c0f69c04c \
     --hash=sha256:bc76d97d1a65bbd9842a6d7577bdf8ca2b43004c7f7b793f49a53445111442be
+Faker==20.1.0 ; python_version >= "3.12" and python_version < "4.0" \
+    --hash=sha256:0483e9a11da0b9c5c7e5008c05e43747d7c6fc9e66973c9df0357de5f7a0ee29 \
+    --hash=sha256:9ed96c65742bb63c6aaa615eba5c3b18c6c0f527dc49b3cf18557e032ffa614e
+python-dateutil==2.9.0.post0 ; python_version >= "3.12" and python_version < "4.0" \
+    --hash=sha256:2a2f987db140271e3f9ef759d51c3c0c556e835124149143dbda818c923a30e4 \
+    --hash=sha256:f4a35d221278ce95acb5b61cafe85979e5ee52c12e0aab0c3ec7575f8e092497
+six==1.16.0 ; python_version >= "3.12" and python_version < "4.0" \
+    --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
+    --hash=sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254

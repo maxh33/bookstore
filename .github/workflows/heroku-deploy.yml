@@ -1,4 +1,4 @@
-name: Push Container to Heroku
+name: Test and Prepare for Heroku Deploy
 
 on:
   push:
@@ -7,16 +7,32 @@ on:
       - 'staging'
 
 jobs:
-  heroku-deploy:
+  test-and-prepare:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Run tests
+        run: |
+          python manage.py test
+          
       - name: Set up Heroku CLI
         run: |
           curl https://cli-assets.heroku.com/install.sh | sh
+          
       - name: Heroku login credentials
         run: |
           cat > ~/.netrc <<EOF
@@ -30,10 +46,7 @@ jobs:
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
           HEROKU_EMAIL: ${{ secrets.HEROKU_EMAIL }}
-      - name: Add Heroku remote
-        run: heroku git:remote --app $HEROKU_APP_NAME
-        env:
-          HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
+          
       - name: Configure Heroku environment variables
         run: |
           heroku config:set SECRET_KEY="${{ secrets.SECRET_KEY }}" --app $HEROKU_APP_NAME
@@ -42,9 +55,6 @@ jobs:
           heroku config:set DISABLE_COLLECTSTATIC=0 --app $HEROKU_APP_NAME
         env:
           HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
-      - name: Push to Heroku
-        run: git push heroku HEAD:refs/heads/main
-      - name: Run database migrations
-        run: heroku run python manage.py migrate --app $HEROKU_APP_NAME
-        env:
-          HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
+          
+      # Note: We're not pushing to Heroku directly anymore
+      # Heroku will automatically deploy from GitHub when tests pass

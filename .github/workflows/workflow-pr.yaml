@@ -11,27 +11,18 @@ jobs:
         uses: actions/setup-python@master
         with:
           python-version: 3.12
-      - name: Install poetry
-        run: |
-          pip install -U pip
-          pip install poetry
-          poetry install
-        env:
-          POETRY_VIRTUALENVS_CREATE: false
-
-      - name: View poetry --help
-        run: poetry --help
-
       - name: Install dependencies
-        shell: bash
-        run: python -m poetry install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install wemake-python-styleguide
 
       - name: Test
         env:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           SQL_PASSWORD: ${{ secrets.SQL_PASSWORD }}
         run: |
-          poetry run python manage.py test
+          python manage.py test
       - name: Wemake Python Stylguide
         uses: wemake-services/wemake-python-styleguide@0.16.0
         continue-on-error: true

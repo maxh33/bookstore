@@ -1,0 +1,3 @@
+# Ignore Poetry files for Heroku deployment
+poetry.lock
+pyproject.toml 

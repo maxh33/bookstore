@@ -15,9 +15,8 @@ class CategoryViewSet(APITestCase):
         self.category = CategoryFactory(title='GPU')
 
     def test_get_all_category(self):
-        response = self.client.get(
-            reverse('category-list', kwargs={'version': 'v1'})
-        )
+        url = f"/bookstore/v1/category/"
+        response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         category_data = json.loads(response.content)
@@ -29,8 +28,9 @@ class CategoryViewSet(APITestCase):
             'title': 'CPU',
         })
 
+        url = f"/bookstore/v1/category/"
         response = self.client.post(
-            reverse('category-list', kwargs={'version': 'v1'}),
+            url,
             data=data,
             content_type='application/json'
         )

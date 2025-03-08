@@ -26,11 +26,12 @@ class TestOrderViewSet(APITestCase):
     def test_order(self):
         token = Token.objects.get(user__username=self.order.user.username)
         self.client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
-        response = self.client.get(
-            reverse("order-list", kwargs={"version": "v1"}))
+        
+        # Use the full URL pattern including the 'bookstore/' prefix
+        url = f"/bookstore/v1/order/"
+        response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
 
         order_data = json.loads(response.content)
 
@@ -55,8 +56,10 @@ class TestOrderViewSet(APITestCase):
         product = ProductFactory()
         data = json.dumps({"product_id": [product.id], "user": user.id})
 
+        # Use the full URL pattern including the 'bookstore/' prefix
+        url = f"/bookstore/v1/order/"
         response = self.client.post(
-            reverse("order-list", kwargs={"version": "v1"}),
+            url,
             data=data,
             content_type="application/json",
         )

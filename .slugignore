@@ -1,0 +1,14 @@
+# Development and test files not needed on Heroku
+.git/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.github/
+prompts/
+.idea/
+docker-compose.yml
+requirements.in
+requirements-ci.txt 

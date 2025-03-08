@@ -1,0 +1,20 @@
+# CI/CD requirements file without hashes
+asgiref==3.8.1
+dj-database-url==2.3.0
+django==5.1.7
+django-debug-toolbar==5.0.1
+django-extensions==3.2.3
+django-rest-framework==0.1.0
+djangorestframework==3.15.2
+factory-boy==3.3.3
+faker==37.0.0
+gunicorn==23.0.0
+packaging==24.2
+psycopg2-binary==2.9.10
+pytz==2025.1
+six==1.17.0
+sqlparse==0.5.3
+typing-extensions==4.12.2
+tzdata==2025.1
+whitenoise==6.9.0
+setuptools==75.8.2 

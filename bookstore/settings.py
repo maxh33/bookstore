@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 import os
+import dj_database_url
 from pathlib import Path
 
 from django.conf.global_settings import STATIC_ROOT
@@ -23,12 +24,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-9oo4ilkuwgg4f1%0ivt0!@^l7s&=npdh30@a%_g@*z9#!k4$v3"
+# The actual secret key value should be set in environment variables
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if SECRET_KEY is None:
+    # Only use this fallback for development
+    import warnings
+    warnings.warn("SECRET_KEY not set in environment, using development key", UserWarning)
+    SECRET_KEY = "insecure-development-key-do-not-use-in-production"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = int(os.environ.get("DEBUG", default=0))
 
-ALLOWED_HOSTS = []
+# Get allowed hosts from environment or use defaults
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost 127.0.0.1").split(" ")
+
+# Add Heroku domain if app name is provided in environment
+HEROKU_APP_NAME = os.environ.get("HEROKU_APP_NAME")
+if HEROKU_APP_NAME:
+    ALLOWED_HOSTS.append(f"{HEROKU_APP_NAME}.herokuapp.com")
 
 
 # Application definition
@@ -99,6 +112,15 @@ DATABASES = {
     }
 }
 
+# Parse database configuration from $DATABASE_URL for Heroku
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    DATABASES['default'] = dj_database_url.config(
+        default=DATABASE_URL,
+        conn_max_age=600,
+        ssl_require=True,
+    )
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -136,6 +158,10 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -158,11 +184,14 @@ INTERNAL_IPS = [
     "127.0.0.1",
 ]
 
-#SECRET_KEY = os.environ.get("SECRET_KEY")
-
-#DEBUG = int(os.environ.get("DEBUG", default=0))
-
-
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'bookstore-app-api-738d721992b2.herokuapp.com']
+# Security settings for production
+if not DEBUG:
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 STATIC_ROOT = BASE_DIR / "staticfiles"

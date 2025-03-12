@@ -37,16 +37,31 @@ elif not SECRET_KEY:
 # Strict DEBUG handling
 DEBUG = bool(int(os.environ.get("DEBUG", 0)))
 
-# Get allowed hosts from environment or use defaults
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost 127.0.0.1 [::1]").split(" ")
-
-# Add Heroku domain if app name is provided in environment
+# Comprehensive Host and CSRF Configuration
 HEROKU_APP_NAME = os.environ.get("HEROKU_APP_NAME", "bookstore-app-api-738d721992b2")
-if HEROKU_APP_NAME:
-    ALLOWED_HOSTS.append(f"{HEROKU_APP_NAME}.herokuapp.com")
-    ALLOWED_HOSTS.append(f"www.{HEROKU_APP_NAME}.herokuapp.com")
 
-# Ensure wildcard is not used in production
+# Dynamically build allowed hosts
+ALLOWED_HOSTS = [
+    f"{HEROKU_APP_NAME}.herokuapp.com",
+    f"www.{HEROKU_APP_NAME}.herokuapp.com",
+    "localhost",
+    "127.0.0.1",
+    "[::1]",
+]
+
+# Add any additional hosts from environment
+additional_hosts = os.environ.get("ADDITIONAL_HOSTS", "").split(",")
+ALLOWED_HOSTS.extend([host.strip() for host in additional_hosts if host.strip()])
+
+# CSRF and Security Configuration
+CSRF_TRUSTED_ORIGINS = [
+    f"https://{HEROKU_APP_NAME}.herokuapp.com",
+    f"https://www.{HEROKU_APP_NAME}.herokuapp.com",
+    "http://localhost",
+    "http://127.0.0.1",
+]
+
+# Ensure no wildcard hosts in production
 if not DEBUG:
     ALLOWED_HOSTS = [host for host in ALLOWED_HOSTS if host != "*"]
 
@@ -198,5 +213,73 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# Ensure STATIC_ROOT is set only once
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Heroku-specific configurations
+if os.environ.get('DYNO'):  # Check if running on Heroku
+    # Heroku specific security settings
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    
+    # Ensure ALLOWED_HOSTS includes Heroku domains
+    ALLOWED_HOSTS = [
+        f"{HEROKU_APP_NAME}.herokuapp.com",
+        f"www.{HEROKU_APP_NAME}.herokuapp.com",
+    ]
+    
+    # CSRF and Security
+    CSRF_TRUSTED_ORIGINS = [
+        f"https://{HEROKU_APP_NAME}.herokuapp.com",
+        f"https://www.{HEROKU_APP_NAME}.herokuapp.com",
+    ]
+    
+    # Ensure these are set in production
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    
+    # Additional Heroku-specific security
+    SECURE_SSL_HOST = f"{HEROKU_APP_NAME}.herokuapp.com"
+
+# Comprehensive Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'django.security': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    },
+}
+
+# Additional Security Diagnostics
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'

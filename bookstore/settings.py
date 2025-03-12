@@ -35,19 +35,6 @@ if SECRET_KEY is None:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = int(os.environ.get("DEBUG", default=0))
 
-# Get allowed hosts from environment or use defaults
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost 127.0.0.1 [::1]").split(" ")
-
-# Add Heroku domain if app name is provided in environment
-HEROKU_APP_NAME = os.environ.get("HEROKU_APP_NAME", "bookstore-app-api-738d721992b2")
-if HEROKU_APP_NAME:
-    ALLOWED_HOSTS.append(f"{HEROKU_APP_NAME}.herokuapp.com")
-
-# Allow all hosts in development mode
-if DEBUG:
-    ALLOWED_HOSTS = ["*"]
-
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -198,5 +185,4 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# Ensure STATIC_ROOT is set only once
 STATIC_ROOT = BASE_DIR / "staticfiles"

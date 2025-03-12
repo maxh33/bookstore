@@ -26,14 +26,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 # The actual secret key value should be set in environment variables
 SECRET_KEY = os.environ.get("SECRET_KEY")
-if SECRET_KEY is None:
-    # Only use this fallback for development
+if not SECRET_KEY and not DEBUG:
+    raise ValueError("SECRET_KEY must be set in production environment")
+elif not SECRET_KEY:
+    # Only for development
     import warnings
-    warnings.warn("SECRET_KEY not set in environment, using development key", UserWarning)
-    SECRET_KEY = "insecure-development-key-do-not-use-in-production"
+    warnings.warn("SECRET_KEY not set, using development key", UserWarning)
+    SECRET_KEY = "dev-insecure-key-change-before-production"
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = int(os.environ.get("DEBUG", default=0))
+# Strict DEBUG handling
+DEBUG = bool(int(os.environ.get("DEBUG", 0)))
 
 # Get allowed hosts from environment or use defaults
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost 127.0.0.1 [::1]").split(" ")
@@ -42,10 +44,11 @@ ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost 127.0.0.1 [::1]").spl
 HEROKU_APP_NAME = os.environ.get("HEROKU_APP_NAME", "bookstore-app-api-738d721992b2")
 if HEROKU_APP_NAME:
     ALLOWED_HOSTS.append(f"{HEROKU_APP_NAME}.herokuapp.com")
+    ALLOWED_HOSTS.append(f"www.{HEROKU_APP_NAME}.herokuapp.com")
 
-# Allow all hosts in development mode
-if DEBUG:
-    ALLOWED_HOSTS = ["*"]
+# Ensure wildcard is not used in production
+if not DEBUG:
+    ALLOWED_HOSTS = [host for host in ALLOWED_HOSTS if host != "*"]
 
 
 # Application definition
@@ -57,24 +60,21 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django_extensions",
     "rest_framework",
     "product",
     "order",
-    "debug_toolbar",
     "rest_framework.authtoken",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # Moved to the top for static files
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
 
 ROOT_URLCONF = "bookstore.urls"
@@ -109,9 +109,9 @@ DATABASES = {
     "default": {
         "ENGINE": os.environ.get("SQL_ENGINE", "django.db.backends.sqlite3"),
         "NAME": os.environ.get("SQL_DATABASE", BASE_DIR / "db.sqlite3"),
-        "USER": os.environ.get("SQL_USER", "user"),
-        "PASSWORD": os.environ.get("SQL_PASSWORD", "password"),
-        "HOST": os.environ.get("SQL_HOST", "localhost"),
+        "USER": os.environ.get("SQL_USER", ""),
+        "PASSWORD": os.environ.get("SQL_PASSWORD", ""),
+        "HOST": os.environ.get("SQL_HOST", ""),
         "PORT": os.environ.get("SQL_PORT", "5432"),
     }
 }

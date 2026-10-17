@@ -2,3 +2,12 @@ __pycache__
 *.pyc
 env/
 db.sqlite3
+.env
+.env.*
+.git
+.github
+.idea
+prompts
+assets
+staticfiles
+deploy

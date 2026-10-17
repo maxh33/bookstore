@@ -1,0 +1,48 @@
+# Deploy na OracleArm (~/bookstore). Codigo em ./src (git clone), .env e backups ficam fora do contexto de build.
+# A rede "bookstore-edge" e criada a mao (docker network create bookstore-edge): o cloudflared do wakapi entra nela,
+# entao um "compose down" aqui nunca remove a rede de que o tunel depende. O Postgres fica numa rede interna, sem saida.
+name: bookstore
+x-log: &log
+  driver: json-file
+  options: {max-size: "10m", max-file: "3"}
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file: .env
+    volumes: [pgdata:/var/lib/postgresql/data]
+    networks: [db]
+    mem_limit: 512m
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      retries: 6
+    logging: *log
+  web:
+    build: ./src
+    restart: unless-stopped
+    env_file: .env
+    command: sh -c "python manage.py migrate --noinput && exec gunicorn bookstore.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 30 --access-logfile -"
+    depends_on:
+      db: {condition: service_healthy}
+    networks:
+      db: {}
+      edge: {aliases: [bookstore-web]}
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 512m
+    healthcheck:
+      # X-Forwarded-Proto evita o 301 do SECURE_SSL_REDIRECT; imagem slim nao tem curl
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen(u.Request('http://localhost:8000/', headers={'X-Forwarded-Proto': 'https'}), timeout=5)"]
+      interval: 30s
+      retries: 3
+      start_period: 30s
+    logging: *log
+networks:
+  db: {internal: true}
+  edge: {external: true, name: bookstore-edge}
+volumes:
+  pgdata: {}

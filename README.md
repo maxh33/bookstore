@@ -31,18 +31,31 @@ The Bookstore application is a backend service built with Django that allows use
 
 ## Project Demo
 
-- **Deployment Link**: [Bookstore App on Heroku](https://bookstore-app-api-738d721992b2.herokuapp.com/)
-- **Admin Panel**: Access the admin panel at [Admin Interface](https://bookstore-app-api-738d721992b2.herokuapp.com/admin/)
+- **Deployment Link**: [Bookstore API](https://bookstore.maxhaider.dev/)
+- **Admin Panel**: [Admin Interface](https://bookstore.maxhaider.dev/admin/)
 - **Images**: 
   - ![Root](assets/img/root.png)
   - ![Product List](assets/img/pList.png)
   - ![Insertion Test](assets/img/insertionTest.png)
-  - ![Heroku Deploy](assets/img/herokuDeploy.png)
   - ![Admin Panel](assets/img/adminPainel.png)
 
 ## Deployment Infrastructure Workflow
 
-The application is deployed on Heroku using a CI/CD pipeline that automatically deploys changes from the main branch after passing tests.
+The application runs in Docker (Django + Postgres) on an Oracle Cloud ARM VPS and is published through a Cloudflare Tunnel, so no
+port is open on the host. It was moved from Heroku in October 2026. The compose file, `.env` template and backup script live in
+`deploy/oracle/`; GitHub Actions only runs the tests.
+
+API writes (POST/PUT/DELETE) require a token (`POST /api-token-auth/`); reads are public.
+
+### Deploying
+
+On the server (`~/bookstore` holds the compose file, `.env` and backups; `~/bookstore/src` is a clone of this repo):
+
+```shell
+cd ~/bookstore/src && git pull && cd .. && docker compose up -d --build
+```
+
+`/admin` is additionally protected by Cloudflare Access. `deploy/oracle/backup.sh` takes a daily Postgres dump (14-day retention).
 
 ## How to Run
 

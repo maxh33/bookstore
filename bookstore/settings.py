@@ -13,57 +13,24 @@ import os
 import dj_database_url
 from pathlib import Path
 
-from django.conf.global_settings import STATIC_ROOT
-from django.contrib.staticfiles.storage import StaticFilesStorage
+from django.core.management.utils import get_random_secret_key
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
-
 # SECURITY WARNING: keep the secret key used in production secret!
-# The actual secret key value should be set in environment variables
-SECRET_KEY = os.environ.get("SECRET_KEY")
-if not SECRET_KEY and not DEBUG:
+DEBUG = os.environ.get("DEBUG", "0") == "1"
+
+# Em desenvolvimento (DEBUG=1) sem SECRET_KEY, usa uma chave nova a cada processo
+SECRET_KEY = os.environ.get("SECRET_KEY") or (get_random_secret_key() if DEBUG else "")
+if not SECRET_KEY:
     raise ValueError("SECRET_KEY must be set in production environment")
-elif not SECRET_KEY:
-    # Only for development
-    import warnings
-    warnings.warn("SECRET_KEY not set, using development key", UserWarning)
-    SECRET_KEY = "dev-insecure-key-change-before-production"
 
-# Strict DEBUG handling
-DEBUG = bool(int(os.environ.get("DEBUG", 0)))
-
-# Comprehensive Host and CSRF Configuration
-HEROKU_APP_NAME = os.environ.get("HEROKU_APP_NAME", "bookstore-app-api-738d721992b2")
-
-# Dynamically build allowed hosts
 ALLOWED_HOSTS = [
-    f"{HEROKU_APP_NAME}.herokuapp.com",
-    f"www.{HEROKU_APP_NAME}.herokuapp.com",
-    "localhost",
-    "127.0.0.1",
-    "[::1]",
+    host for host in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost 127.0.0.1 [::1]").split() if host != "*"
 ]
-
-# Add any additional hosts from environment
-additional_hosts = os.environ.get("ADDITIONAL_HOSTS", "").split(",")
-ALLOWED_HOSTS.extend([host.strip() for host in additional_hosts if host.strip()])
-
-# CSRF and Security Configuration
-CSRF_TRUSTED_ORIGINS = [
-    f"https://{HEROKU_APP_NAME}.herokuapp.com",
-    f"https://www.{HEROKU_APP_NAME}.herokuapp.com",
-    "http://localhost",
-    "http://127.0.0.1",
-]
-
-# Ensure no wildcard hosts in production
-if not DEBUG:
-    ALLOWED_HOSTS = [host for host in ALLOWED_HOSTS if host != "*"]
+CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "").split()
 
 
 # Application definition
@@ -114,7 +81,10 @@ WSGI_APPLICATION = "bookstore.wsgi.application"
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
 
 
 # Database
@@ -131,13 +101,13 @@ DATABASES = {
     }
 }
 
-# Parse database configuration from $DATABASE_URL for Heroku
+# Parse database configuration from $DATABASE_URL
 DATABASE_URL = os.environ.get('DATABASE_URL')
 if DATABASE_URL:
     DATABASES['default'] = dj_database_url.config(
         default=DATABASE_URL,
         conn_max_age=600,
-        ssl_require=True,
+        ssl_require=os.environ.get("DB_SSL_REQUIRE", "0") == "1",
     )
 
 
@@ -189,13 +159,18 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # REST Framework settings
 REST_FRAMEWORK = {
-'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-'PAGE_SIZE': 10,
-'DEFAULT_AUTHENTICATION_CLASSES': [
-'rest_framework.authentication.BasicAuthentication',
-'rest_framework.authentication.SessionAuthentication',
-'rest_framework.authentication.TokenAuthentication',
-],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 10,
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticatedOrReadOnly"],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {"anon": "120/min", "user": "600/min"},
 }
 
 # Debug toolbar settings
@@ -203,45 +178,14 @@ INTERNAL_IPS = [
     "127.0.0.1",
 ]
 
-# Security settings for production
+# Security settings for production (TLS termina no Cloudflare/cloudflared; o proxy envia X-Forwarded-Proto)
 if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-STATIC_ROOT = BASE_DIR / "staticfiles"
-
-# Heroku-specific configurations
-if os.environ.get('DYNO'):  # Check if running on Heroku
-    # Heroku specific security settings
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_SSL_REDIRECT = True
-    
-    # Ensure ALLOWED_HOSTS includes Heroku domains
-    ALLOWED_HOSTS = [
-        f"{HEROKU_APP_NAME}.herokuapp.com",
-        f"www.{HEROKU_APP_NAME}.herokuapp.com",
-    ]
-    
-    # CSRF and Security
-    CSRF_TRUSTED_ORIGINS = [
-        f"https://{HEROKU_APP_NAME}.herokuapp.com",
-        f"https://www.{HEROKU_APP_NAME}.herokuapp.com",
-    ]
-    
-    # Ensure these are set in production
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 31536000
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-    
-    # Additional Heroku-specific security
-    SECURE_SSL_HOST = f"{HEROKU_APP_NAME}.herokuapp.com"
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Comprehensive Logging Configuration
 LOGGING = {

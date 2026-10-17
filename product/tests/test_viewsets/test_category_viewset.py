@@ -5,6 +5,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 
+from order.factories import UserFactory
 from product.factories import CategoryFactory
 from product.models import Category
 
@@ -13,6 +14,8 @@ class CategoryViewSet(APITestCase):
 
     def setUp(self):
         self.category = CategoryFactory(title='GPU')
+        self.user = UserFactory()
+        self.token = Token.objects.create(user=self.user)
 
     def test_get_all_category(self):
         url = f"/bookstore/v1/category/"
@@ -23,7 +26,14 @@ class CategoryViewSet(APITestCase):
 
         self.assertEqual(category_data["results"][0]['title'], self.category.title)
 
+    def test_create_category_requires_authentication(self):
+        response = self.client.post('/bookstore/v1/category/', data={'title': 'CPU'}, format='json')
+
+        self.assertIn(response.status_code, (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN))
+        self.assertFalse(Category.objects.filter(title='CPU').exists())
+
     def test_create_category(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
         data = json.dumps({
             'title': 'CPU',
         })

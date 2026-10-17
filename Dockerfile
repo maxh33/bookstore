@@ -1,44 +1,22 @@
-# Use Python 3.12 slim image as base
 FROM python:3.12-slim
 
-# Set environment variables
 ENV PYTHONUNBUFFERED=1 \
-    # prevents python creating .pyc files
     PYTHONDONTWRITEBYTECODE=1 \
-    \
-    # pip
-    PIP_NO_CACHE_DIR=off \
-    PIP_DISABLE_PIP_VERSION_CHECK=on \
-    PIP_DEFAULT_TIMEOUT=100
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies
-RUN apt-get update \
-    && apt-get install --no-install-recommends -y \
-        # deps for building python deps
-        build-essential \
-        # postgres dependencies
-        libpq-dev 
-
-# Set working directory
 WORKDIR /app
 
-# Copy requirements files
-COPY requirements.txt /app/
+COPY requirements.txt .
+RUN pip install --require-hashes -r requirements.txt
 
-# Install project dependencies
-RUN pip install --upgrade pip \
-    && pip install -r requirements.txt
+COPY . .
 
-# Copy application code
-COPY . /app/
+# SECRET_KEY descartavel: so para o collectstatic em build; o real vem do ambiente em runtime
+RUN SECRET_KEY=collectstatic-only python manage.py collectstatic --noinput \
+    && useradd --system --uid 10001 app
 
-# Run collectstatic for Django
-RUN python manage.py collectstatic --noinput
-
-# Expose port
+USER app
 EXPOSE 8000
 
-# Run the application with gunicorn for production
-CMD gunicorn bookstore.wsgi:application --bind 0.0.0.0:$PORT
-
-
+CMD ["gunicorn", "bookstore.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2", "--timeout", "30", "--access-logfile", "-"]

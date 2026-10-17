@@ -47,6 +47,16 @@ port is open on the host. It was moved from Heroku in October 2026. The compose 
 
 API writes (POST/PUT/DELETE) require a token (`POST /api-token-auth/`); reads are public.
 
+### Deploying
+
+On the server (`~/bookstore` holds the compose file, `.env` and backups; `~/bookstore/src` is a clone of this repo):
+
+```shell
+cd ~/bookstore/src && git pull && cd .. && docker compose up -d --build
+```
+
+`/admin` is additionally protected by Cloudflare Access. `deploy/oracle/backup.sh` takes a daily Postgres dump (14-day retention).
+
 ## How to Run
 
 1. Clone this project
